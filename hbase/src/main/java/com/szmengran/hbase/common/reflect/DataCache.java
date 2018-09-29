@@ -1,4 +1,4 @@
-package com.szmengran.common.reflect;
+package com.szmengran.hbase.common.reflect;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

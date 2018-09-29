@@ -14,34 +14,30 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-@Component
 public class HBaseConnectionPool {
-	
-	@Value("${hbase.zookeeper.quorum}")
-	private static String zkHost;
-	
-	@Value("${hbase.pool.maxnum}")
-	private static int maxnum;
-	
-	private static Connection connection = null;// 要创建的connection
 
-	public static Connection getConnection() {
-		if (null == connection) {
-			if (null == connection) {// 空的时候创建，不为空就直接返回；典型的单例模式
-				Configuration conf = HBaseConfiguration.create();
-				conf.set("hbase.zookeeper.quorum", zkHost);
-				ExecutorService pool = Executors.newFixedThreadPool(maxnum);// 建立一个数量为maxnum的线程池
-				try {
-					connection = ConnectionFactory.createConnection(conf, pool);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			}
+	private Configuration conf = null;
+	private ExecutorService pool = null;
+	
+	public HBaseConnectionPool(String zkHost, String port, String maxsize, int maxnum) {
+		conf = HBaseConfiguration.create();
+		conf.set("hbase.zookeeper.quorum", zkHost);
+		conf.set("hbase.zookeeper.property.clientPort", port);
+		conf.set("hbase.client.keyvalue.maxsize", maxsize);
+		pool = Executors.newFixedThreadPool(maxnum);// 建立一个数量为maxnum的线程池
+	}
+	
+	public Connection getConnection() throws IOException{
+		Connection connection = null;// 要创建的connection
+		try {
+			connection = ConnectionFactory.createConnection(this.conf, this.pool);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
 		}
 		return connection;
 	}
+	
+	
 }

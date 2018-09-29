@@ -2,7 +2,7 @@ server:
   port: 30001
 spring:
   application:
-    name: wechat
+    name: hbase
   cloud:
     config:
       uri: ${CONFIG_SERVER_ADDRESS}
@@ -16,3 +16,15 @@ spring:
     bootstrap-servers: ${KAFKA_SERVER}
 logging:
   config: ${CONFIG_SERVER_ADDRESS}/resources/logback-spring.xml
+hbase:
+  config:
+    hbase.zookeeper.quorum: 192.168.0.115
+    hbase.zookeeper.property.clientPort: 2181
+    fs.defaultFS: hdfs://192.168.0.127:8020
+    fs.trash.interval: 1
+  pool:
+    maxnum: 20
+  zookeeper:
+    quorum: 192.168.0.115
+    property:
+      clientPort: 2181

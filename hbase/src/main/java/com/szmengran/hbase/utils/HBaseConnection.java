@@ -107,6 +107,8 @@ public class HBaseConnection {
 			table.put(put);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			table.close();
 		}
 		System.out.println("end insert data ......");
 	}
@@ -263,7 +265,7 @@ public class HBaseConnection {
 
 	public static void main(String[] args) throws Exception {
 		// 创建表
-		createTable("t_table", new String[] { "f1", "f2", "f3" });
+//		createTable("t_table", new String[] { "f1", "f2", "f3" });
 		// 添加数据
 		insertData("t_table", "row-0001", "f1", "a", "fffaaa");
 		insertData("t_table", "row-0001", "f2", "b", "fffbbb");
