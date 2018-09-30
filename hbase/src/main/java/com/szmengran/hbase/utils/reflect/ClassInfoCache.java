@@ -1,4 +1,4 @@
-package com.szmengran.hbase.common.reflect;
+package com.szmengran.hbase.utils.reflect;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

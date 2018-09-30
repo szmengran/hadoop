@@ -1,18 +1,17 @@
 package com.szmengran.hbase.utils;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @Package com.szmengran.hbase.utils
@@ -23,89 +22,51 @@ import org.springframework.beans.factory.annotation.Value;
 
 public class HdfsFileSystem {
 	
-	public static String HDFS_HOST;
-	
-	@Value("${hbase.hdfs.host}")
-    public void setHost(String host) {
-		HdfsFileSystem.HDFS_HOST = host;
+	/**
+	 * 将文件复制到输出流中，用于文件下载
+	 * @param uri
+	 * @param fpath
+	 * @param out
+	 * @param username
+	 * @throws IOException
+	 * @throws InterruptedException 
+	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
+	 */
+	public static void copyFileAsStream(String uri, String fpath, OutputStream out, String username) throws IOException, InterruptedException {
+        Configuration conf = new Configuration();
+        FileSystem hdfs = FileSystem.get(URI.create(uri), conf, username);
+        org.apache.hadoop.fs.Path filePath = new org.apache.hadoop.fs.Path(fpath);
+        FSDataInputStream fsInput = hdfs.open(filePath);
+        IOUtils.copyBytes(fsInput, out, 4096, false);
+        fsInput.close();
+        out.flush();
     }
 
 	/**
-	 * 按路径上传文件到hdfs
-	 * 
-	 * @param conf
-	 * @param local
-	 * @param remote
-	 * @throws IOException
-	 */
-	public static void copyFile(Configuration conf, String uri, String local, String remote) throws IOException {
-		FileSystem fs = FileSystem.get(URI.create(uri), conf);
-		fs.copyFromLocalFile(new Path(local), new Path(remote));
-		fs.close();
-	}
-
-	/**
-	 * 按路径下载hdfs上的文件
-	 * 
-	 * @param conf
+	 * 文件上传到hdfs
 	 * @param uri
-	 * @param remote
-	 * @param local
-	 * @throws IOException
-	 */
-	public static void download(Configuration conf, String uri, String remote, String local) throws IOException {
-		Path path = new Path(remote);
-		FileSystem fs = FileSystem.get(URI.create(uri), conf);
-		fs.copyToLocalFile(path, new Path(local));
-		fs.close();
-	}
-
-	/**
-	 * File对象上传到hdfs
-	 * 
-	 * @param conf
-	 * @param uri
-	 * @param remote
-	 * @param local
-	 * @throws IOException
-	 */
-	public static void createFile(File localPath, String hdfsPath) throws IOException {
-		InputStream in = null;
-		hdfsPath = HDFS_HOST+hdfsPath;
-		try {
-			Configuration conf = new Configuration();
-			FileSystem fileSystem = FileSystem.get(URI.create(hdfsPath), conf);
-			FSDataOutputStream out = fileSystem.create(new Path(hdfsPath));
-			in = new BufferedInputStream(new FileInputStream(localPath));
-			IOUtils.copyBytes(in, out, 4096, false);
-			out.hsync();
-			out.close();
-		} finally {
-			IOUtils.closeStream(in);
-		}
-	}
-	
-	/**
-	 * File对象上传到hdfs
 	 * @param inputStream
 	 * @param filepath
 	 * @param filename
-	 * @throws IOException      
-	 * @return: void      
-	 * @throws   
+	 * @param username 拥有操作HDFS的用户名
+	 * @throws Exception 
 	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
 	 */
-	public static void createFile(InputStream inputStream, String filepath, String filename) throws IOException {
+	public static void createFile(String uri, InputStream inputStream, String filepath, String filename, String username) throws Exception {
 		InputStream in = null;
-		String hdfsPath = HDFS_HOST+filepath+"/"+filename;
+		FSDataOutputStream out = null;
+		String hdfsPath = uri+filepath+"/"+filename;
 		try {
 			Configuration conf = new Configuration();
-			FileSystem fileSystem = FileSystem.get(URI.create(hdfsPath), conf);
-			FSDataOutputStream out = fileSystem.create(new Path(hdfsPath));
+			FileSystem fileSystem = FileSystem.get(URI.create(uri), conf, username);
+			out = fileSystem.create(new Path(hdfsPath));
 			in = new BufferedInputStream(inputStream);
 			IOUtils.copyBytes(in, out, 4096, false);
 			out.hsync();
 			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
 		} finally {
 			IOUtils.closeStream(in);
 		}

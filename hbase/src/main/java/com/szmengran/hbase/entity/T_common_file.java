@@ -15,7 +15,7 @@ public class T_common_file{
 	private String path;
 	private String suffix;
 	private String orgname;
-	private Long size;
+	private Long filesize;
 	private String validstatus;
 	private Timestamp createstamp;
 	private Timestamp updatestamp;
@@ -55,11 +55,11 @@ public class T_common_file{
 	public void setSuffix(String suffix) {
 		this.suffix = suffix;
 	}
-	public Long getSize() {
-		return size;
+	public Long getFilesize() {
+		return filesize;
 	}
-	public void setSize(Long size) {
-		this.size = size;
+	public void setFilesize(Long filesize) {
+		this.filesize = filesize;
 	}
 	public String getValidstatus() {
 		return validstatus;
