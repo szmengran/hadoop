@@ -46,10 +46,7 @@ public class FileController {
     public Response upload(HttpServletRequest request, @PathVariable("userid") String userid) throws Exception {
         List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
         // this map is used to save the names of files and consistent row keys
-        List<Map<String,Object>> mapInfo = new ArrayList<>();
-
-        //record the number of failed file
-        int failedFile = 0;
+        List<T_common_file> list = new ArrayList<T_common_file>();
 
         if (files != null && files.size() > 0){
         	ExecutorService executor = Executors.newFixedThreadPool(5);
@@ -57,29 +54,26 @@ public class FileController {
 			Future<T_common_file>[] futures = new Future[files.size()];
             for (int i = 0; i < files.size(); i++) {
             	MultipartFile file = files.get(i);
-            	Future<T_common_file> future = executor.submit(() -> {
+            	futures[i] = executor.submit(() -> {
             		return fileService.upload(file, userid);
             	});
-            	futures[i] = future;
             }
-            T_common_file t_common_file = futures[0].get();
-            System.out.println(t_common_file.getOrgname());
+            for (Future<T_common_file> future: futures) {
+            	list.add(future.get());
+            }
+            
         }else {
             throw new BusinessException(30001001, "请检查是否上传了文件");
         }
-        Map<String,Object> internalMap = new HashMap<>();
-        internalMap.put("total",files.size());
-        internalMap.put("error",failedFile);
-        internalMap.put("data",mapInfo);
         Response response = new Response();
-        response.setData(internalMap);
+        response.setData(list);
         return response;
     }
     
 
 
     @GetMapping(value = "/download/{fileid}")
-    public void download(@PathVariable("fileid")String fileid, HttpServletRequest request, HttpServletResponse res) throws Exception{
+    public void download(@PathVariable("fileid")String fileid, HttpServletRequest request, HttpServletResponse response) throws Exception{
     	T_common_file t_common_file = fileService.findById(fileid);
     	String filename = t_common_file.getOrgname();
     	if (request.getHeader("User-Agent").toUpperCase().indexOf("MSIE") > 0) {
@@ -87,13 +81,14 @@ public class FileController {
     	} else {	
     		filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
     	}
-        res.setContentType("application/force-download");
-        res.setHeader("Content-Disposition", "attachment;fileName=" + filename);
+    	response.setContentType("application/force-download");
+    	response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
 
-        OutputStream outputStream = res.getOutputStream();
+        OutputStream outputStream = response.getOutputStream();
         fileService.download(t_common_file.getPath(), outputStream, t_common_file.getFileid());
         outputStream.flush();
         outputStream.close();
+        response.flushBuffer();
     }
 
 }
