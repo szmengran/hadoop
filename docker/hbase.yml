@@ -1,0 +1,23 @@
+version: '3.1'
+services:
+  hbase:
+    image: szmengran/hbase:$CLOUD_VERSION
+    restart: always
+    environment:
+      - KAFKA_SERVER=$KAFKA_SERVER
+      - ENVIRONMENT=$ENVIRONMENT
+      - EUREKA_SERVER_ADDRESS=http://eureka:8761/eureka
+      - CONFIG_SERVER_ADDRESS=http://config:10001
+      - GITLAB_USERNAME=$GITLAB_USERNAME
+      - GITLAB_PASSWORD=$GITLAB_PASSWORD
+    ports:
+     - "30001:30001"
+    extra_hosts:
+      - "hadoop.master:192.168.0.127"
+      - "hadoop.slave1:192.168.0.113"
+      - "hadoop.slave2:192.168.0.115"
+      - "hadoop.slave3:192.168.0.112"
+networks:
+  default:
+    external:
+      name: cloud
