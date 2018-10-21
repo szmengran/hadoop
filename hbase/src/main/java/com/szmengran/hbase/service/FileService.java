@@ -53,4 +53,15 @@ public interface FileService {
 	 */
 	public void download(String path, OutputStream outputStream, String fileid) throws Exception;
 	
+	/**
+	 * 图片处理
+	 * @param outputStream
+	 * @param fileid
+	 * @param width
+	 * @param height
+	 * @throws Exception 
+	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
+	 */
+	public void downloadImage(OutputStream outputStream, String fileid, String scale, String rotate, String width, String height) throws Exception;
+	
 }

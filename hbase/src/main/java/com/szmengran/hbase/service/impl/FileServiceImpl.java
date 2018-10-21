@@ -1,10 +1,14 @@
 package com.szmengran.hbase.service.impl;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Timestamp;
 import java.util.Calendar;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +29,8 @@ import com.szmengran.hbase.entity.T_common_file;
 import com.szmengran.hbase.service.FileService;
 import com.szmengran.hbase.utils.HBaseConnectionPool;
 import com.szmengran.hbase.utils.HdfsFileSystem;
+
+import net.coobird.thumbnailator.Thumbnails;
 
 /**
  * @Package com.szmengran.hbase.service.impl
@@ -88,6 +94,7 @@ public class FileServiceImpl implements FileService{
             String suffix = arr.length > 1 ? arr[arr.length-1] : "";
             t_common_file.setSuffix(suffix);
             t_common_file.setType(file.getContentType());
+            t_common_file.setUserid(userid);
             T_common_file oldFile = findById(fileid); //查找是否有重复的文件
             if (oldFile == null) { //如果数据保存成功则表示没有重复的文件存在
             	String path = null;
@@ -171,5 +178,48 @@ public class FileServiceImpl implements FileService{
 		} else {
 			HdfsFileSystem.copyFileAsStream(HDFS_HOST, path+"/"+fileid, outputStream, username);
 		}
+	}
+	
+	/**
+	 * 根据指定的宽高输出图片
+	 * @param outputStream
+	 * @param fileid
+	 * @param width
+	 * @param height
+	 * @throws Exception 
+	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
+	 */
+	public void downloadImage(OutputStream outputStream, String fileid, String scale, String rotate, String width, String height) throws Exception {
+		Table table = null;
+		try {
+		  table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
+		//get files' bytes
+		Get get = new Get(Bytes.toBytes(fileid));
+		Result result = null;
+		try {
+		  result = table.get(get);
+		} catch (IOException e) {
+		  System.out.println("找不到行键对应的文件");
+		}
+		//get file's name
+		byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
+		ByteArrayInputStream in = new ByteArrayInputStream(content);
+		BufferedImage image = ImageIO.read(in);
+		net.coobird.thumbnailator.Thumbnails.Builder<BufferedImage> builder = Thumbnails.of(image);
+		if (StringUtils.isNotBlank(width) && StringUtils.isNotBlank(height)) {
+			builder.size(Integer.parseInt(width), Integer.parseInt(height));
+		}
+		if (StringUtils.isNotBlank(scale)) {
+			builder.scale(Double.parseDouble(scale));
+		}
+		if (StringUtils.isNotBlank(rotate)) {
+			builder.rotate(Double.parseDouble(rotate));
+		}
+		builder.outputFormat("png")
+        .toOutputStream(outputStream);
 	}
 }
