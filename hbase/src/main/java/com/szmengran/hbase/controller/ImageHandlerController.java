@@ -40,12 +40,12 @@ public class ImageHandlerController {
     	response.setContentType("application/force-download");
     	response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
     	
-    	String scale = request.getParameter("scale"); //压缩比例
+    	String strQuality = request.getParameter("quality"); //压缩比例
     	String rotate = request.getParameter("rotate"); //旋转度数
-    	String width = request.getParameter("width"); //宽度
-    	String height = request.getParameter("height"); //高度
+    	String strWidth = request.getParameter("width"); //宽度
+    	String strHeight = request.getParameter("height"); //高度
         OutputStream outputStream = response.getOutputStream();
-        fileService.downloadImage(outputStream, t_common_file.getFileid(), scale, rotate, width, height);
+        fileService.downloadImage(outputStream, t_common_file.getFileid(), strQuality, rotate, strWidth, strHeight);
         outputStream.flush();
         outputStream.close();
         response.flushBuffer();

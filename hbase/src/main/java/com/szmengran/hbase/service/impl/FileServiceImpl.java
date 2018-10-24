@@ -31,6 +31,7 @@ import com.szmengran.hbase.utils.HBaseConnectionPool;
 import com.szmengran.hbase.utils.HdfsFileSystem;
 
 import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 
 /**
  * @Package com.szmengran.hbase.service.impl
@@ -159,22 +160,24 @@ public class FileServiceImpl implements FileService{
 		if (StringUtils.isBlank(path)) {
 	        Table table = null;
 			try {
-			  table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
+				table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
+				//get files' bytes
+				Get get = new Get(Bytes.toBytes(fileid));
+				Result result = null;
+				try {
+				  result = table.get(get);
+				} catch (IOException e) {
+				  throw new Exception("找不到行键对应的文件");
+				}
+				//get file's name
+				byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
+				outputStream.write(content);
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw e;
+			} finally {
+				table.close();
 			}
-			//get files' bytes
-			Get get = new Get(Bytes.toBytes(fileid));
-			Result result = null;
-			try {
-			  result = table.get(get);
-			} catch (IOException e) {
-			  System.out.println("找不到行键对应的文件");
-			}
-			//get file's name
-			byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
-			outputStream.write(content);
 		} else {
 			HdfsFileSystem.copyFileAsStream(HDFS_HOST, path+"/"+fileid, outputStream, username);
 		}
@@ -184,42 +187,76 @@ public class FileServiceImpl implements FileService{
 	 * 根据指定的宽高输出图片
 	 * @param outputStream
 	 * @param fileid
-	 * @param width
-	 * @param height
+	 * @param strWidth
+	 * @param strHeight
 	 * @throws Exception 
 	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
 	 */
-	public void downloadImage(OutputStream outputStream, String fileid, String scale, String rotate, String width, String height) throws Exception {
+	public void downloadImage(OutputStream outputStream, String fileid, String strQuality, String rotate, String strWidth, String strHeight) throws Exception {
 		Table table = null;
 		try {
-		  table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
+			table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
+			//get files' bytes
+			Get get = new Get(Bytes.toBytes(fileid));
+			Result result = null;
+			try {
+				result = table.get(get);
+			} catch (IOException e) {
+				throw new Exception("找不到行键对应的文件");
+			}
+			//get file's name
+			byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
+			BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
+			int imageWidth = image.getWidth();  
+			int imageHeitht = image.getHeight();
+			Float quality = 1f;
+			if (StringUtils.isNotBlank(strQuality)) {
+				quality = Float.valueOf(strQuality);
+			}
+			net.coobird.thumbnailator.Thumbnails.Builder<BufferedImage> builder = null;
+			if (StringUtils.isNotBlank(strWidth) && StringUtils.isNotBlank(strHeight)) { //有指定宽高 进行剪切
+				Integer width = Integer.valueOf(strWidth);
+				Integer height = Integer.valueOf(strHeight);
+				
+				if ((float)width / height != (float)imageWidth / imageHeitht) {  
+				    if (imageWidth/width < imageHeitht/height) {  
+				    	image = Thumbnails.of(image).width(width).asBufferedImage();  
+				    } else {  
+				    	image = Thumbnails.of(image).height(height).asBufferedImage();  
+				    }  
+				    builder = Thumbnails.of(image).sourceRegion(Positions.CENTER, width, height).size(width, height);  
+				}else {  
+				    builder = Thumbnails.of(image).size(width, height);  
+				}
+				builder = Thumbnails.of(builder.asBufferedImage()).scale(1f).outputQuality(quality);
+			} else if (StringUtils.isNotBlank(strWidth)) { //按宽比例缩放
+				double scale=1f;
+				Integer width = Integer.valueOf(strWidth);
+				if (width < imageHeitht) {
+					scale = width.doubleValue() / imageWidth;
+				}
+				builder = Thumbnails.of(image).scale(scale).outputQuality(quality);
+			} else if (StringUtils.isNotBlank(strHeight)) { //按高比例缩放
+				double scale=1f;
+				Integer height = Integer.valueOf(strHeight);
+				if(height < imageHeitht){
+					scale = height.doubleValue() / imageHeitht;
+				}
+				builder=Thumbnails.of(image).scale(scale).outputQuality(quality);
+			}else{ //原图
+				builder =Thumbnails.of(image).scale(1f).outputQuality(quality);
+			}
+			
+			if (StringUtils.isNotBlank(rotate)) {
+				builder.rotate(Double.parseDouble(rotate));
+			}
+			builder.outputFormat("png")
+	        .toOutputStream(outputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
+		} finally {
+			table.close();
 		}
-		//get files' bytes
-		Get get = new Get(Bytes.toBytes(fileid));
-		Result result = null;
-		try {
-		  result = table.get(get);
-		} catch (IOException e) {
-		  System.out.println("找不到行键对应的文件");
-		}
-		//get file's name
-		byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
-		ByteArrayInputStream in = new ByteArrayInputStream(content);
-		BufferedImage image = ImageIO.read(in);
-		net.coobird.thumbnailator.Thumbnails.Builder<BufferedImage> builder = Thumbnails.of(image);
-		if (StringUtils.isNotBlank(width) && StringUtils.isNotBlank(height)) {
-			builder.size(Integer.parseInt(width), Integer.parseInt(height));
-		}
-		if (StringUtils.isNotBlank(scale)) {
-			builder.scale(Double.parseDouble(scale));
-		}
-		if (StringUtils.isNotBlank(rotate)) {
-			builder.rotate(Double.parseDouble(rotate));
-		}
-		builder.outputFormat("png")
-        .toOutputStream(outputStream);
 	}
 }
