@@ -194,6 +194,8 @@ public class FileServiceImpl implements FileService{
 	 */
 	public void downloadImage(OutputStream outputStream, String fileid, String strQuality, String rotate, String strWidth, String strHeight) throws Exception {
 		Table table = null;
+		BufferedImage image = null;
+		InputStream inStream = null;
 		try {
 			table = hbaseConnectionPool.getConnection().getTable(TableName.valueOf("file"));
 			//get files' bytes
@@ -204,59 +206,65 @@ public class FileServiceImpl implements FileService{
 			} catch (IOException e) {
 				throw new Exception("找不到行键对应的文件");
 			}
-			//get file's name
-			byte[] content = result.getValue(Bytes.toBytes("info"),Bytes.toBytes("data"));
-			BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
-			int imageWidth = image.getWidth();  
-			int imageHeitht = image.getHeight();
 			Float quality = 1f;
 			if (StringUtils.isNotBlank(strQuality)) {
 				quality = Float.valueOf(strQuality);
 			}
-			net.coobird.thumbnailator.Thumbnails.Builder<BufferedImage> builder = null;
+			
+			Double rotateD = 0D;
+			
+			if (StringUtils.isNotBlank(rotate)) {
+				rotateD = Double.parseDouble(rotate);
+			}
+			
+			//get file's name
+			byte[] content = result.getValue(Bytes.toBytes("info"), Bytes.toBytes("data"));
+			
+			inStream = new ByteArrayInputStream(content);
+			if (StringUtils.isBlank(strWidth) && StringUtils.isBlank(strHeight)) {
+				Thumbnails.of(inStream).scale(1f).outputQuality(quality).rotate(rotateD).toOutputStream(outputStream);
+				return;
+			}
+			image = ImageIO.read(inStream);
+			int imageWidth = image.getWidth();  
+			int imageHeitht = image.getHeight();
 			if (StringUtils.isNotBlank(strWidth) && StringUtils.isNotBlank(strHeight)) { //有指定宽高 进行剪切
 				Integer width = Integer.valueOf(strWidth);
 				Integer height = Integer.valueOf(strHeight);
-				
 				if ((float)width / height != (float)imageWidth / imageHeitht) {  
 				    if (imageWidth/width < imageHeitht/height) {  
 				    	image = Thumbnails.of(image).width(width).asBufferedImage();  
 				    } else {  
 				    	image = Thumbnails.of(image).height(height).asBufferedImage();  
 				    }  
-				    builder = Thumbnails.of(image).sourceRegion(Positions.CENTER, width, height).size(width, height);  
+				    Thumbnails.of(image).sourceRegion(Positions.CENTER, width, height).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);  
 				}else {  
-				    builder = Thumbnails.of(image).size(width, height);  
+				    Thumbnails.of(image).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream); 
 				}
-				builder = Thumbnails.of(builder.asBufferedImage()).scale(1f).outputQuality(quality);
 			} else if (StringUtils.isNotBlank(strWidth)) { //按宽比例缩放
 				double scale=1f;
 				Integer width = Integer.valueOf(strWidth);
 				if (width < imageHeitht) {
 					scale = width.doubleValue() / imageWidth;
 				}
-				builder = Thumbnails.of(image).scale(scale).outputQuality(quality);
+				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);
 			} else if (StringUtils.isNotBlank(strHeight)) { //按高比例缩放
 				double scale=1f;
 				Integer height = Integer.valueOf(strHeight);
 				if(height < imageHeitht){
 					scale = height.doubleValue() / imageHeitht;
 				}
-				builder=Thumbnails.of(image).scale(scale).outputQuality(quality);
-			}else{ //原图
-				builder =Thumbnails.of(image).scale(1f).outputQuality(quality);
+				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);
 			}
-			
-			if (StringUtils.isNotBlank(rotate)) {
-				builder.rotate(Double.parseDouble(rotate));
-			}
-			builder.outputFormat("png")
-	        .toOutputStream(outputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
 		} finally {
 			table.close();
+			inStream.close();
+			if (image != null) {
+				image.flush();
+			}
 		}
 	}
 }

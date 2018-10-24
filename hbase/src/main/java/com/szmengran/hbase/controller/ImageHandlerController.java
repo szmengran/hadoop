@@ -1,7 +1,6 @@
 package com.szmengran.hbase.controller;
 
 import java.io.OutputStream;
-import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,24 +29,19 @@ public class ImageHandlerController {
 	
     @GetMapping(value = "/image/resize/{fileid}")
     public void download(@PathVariable("fileid")String fileid, HttpServletRequest request, HttpServletResponse response) throws Exception{
+    	response.setContentType("image/jpeg");
     	T_common_file t_common_file = fileService.findById(fileid);
-    	String filename = t_common_file.getFileid()+".png";
-    	if (request.getHeader("User-Agent").toUpperCase().indexOf("MSIE") > 0) {
-    		filename = URLEncoder.encode(filename, "UTF-8");
-    	} else {	
-    		filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
-    	}
-    	response.setContentType("application/force-download");
-    	response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
-    	
     	String strQuality = request.getParameter("quality"); //压缩比例
     	String rotate = request.getParameter("rotate"); //旋转度数
     	String strWidth = request.getParameter("width"); //宽度
     	String strHeight = request.getParameter("height"); //高度
         OutputStream outputStream = response.getOutputStream();
-        fileService.downloadImage(outputStream, t_common_file.getFileid(), strQuality, rotate, strWidth, strHeight);
-        outputStream.flush();
-        outputStream.close();
-        response.flushBuffer();
+        try {
+        	fileService.downloadImage(outputStream, t_common_file.getFileid(), strQuality, rotate, strWidth, strHeight);
+        } finally {
+        	outputStream.flush();
+	        outputStream.close();
+	        response.flushBuffer();
+        }
     }
 }
