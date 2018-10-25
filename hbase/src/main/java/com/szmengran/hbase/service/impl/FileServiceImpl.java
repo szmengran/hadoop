@@ -131,6 +131,7 @@ public class FileServiceImpl implements FileService{
 			table = connection.getTable(TableName.valueOf("file"));
 			Put put = new Put(fileid.getBytes());
 	        put.addColumn(Bytes.toBytes("info"), Bytes.toBytes("data"), file.getBytes());
+	        put.addColumn(Bytes.toBytes("info"), Bytes.toBytes("type"), file.getContentType().getBytes());
 	        table.put(put);
 		} catch (Exception e) {
 			throw e;
@@ -219,7 +220,11 @@ public class FileServiceImpl implements FileService{
 			
 			//get file's name
 			byte[] content = result.getValue(Bytes.toBytes("info"), Bytes.toBytes("data"));
-			
+			byte[] typeByte = result.getValue(Bytes.toBytes("info"), Bytes.toBytes("type"));
+			String type = "jpeg";
+			if (typeByte != null) {
+				type = new String(typeByte).toLowerCase().indexOf("png") > -1 ? "png" : "jpeg";
+			}
 			inStream = new ByteArrayInputStream(content);
 			if (StringUtils.isBlank(strWidth) && StringUtils.isBlank(strHeight)) {
 				Thumbnails.of(inStream).scale(1f).outputQuality(quality).rotate(rotateD).toOutputStream(outputStream);
@@ -237,9 +242,9 @@ public class FileServiceImpl implements FileService{
 				    } else {  
 				    	image = Thumbnails.of(image).height(height).asBufferedImage();  
 				    }  
-				    Thumbnails.of(image).sourceRegion(Positions.CENTER, width, height).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);  
+				    Thumbnails.of(image).sourceRegion(Positions.CENTER, width, height).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat(type).toOutputStream(outputStream);  
 				}else {  
-				    Thumbnails.of(image).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream); 
+				    Thumbnails.of(image).size(width, height).outputQuality(quality).rotate(rotateD).outputFormat(type).toOutputStream(outputStream); 
 				}
 			} else if (StringUtils.isNotBlank(strWidth)) { //按宽比例缩放
 				double scale=1f;
@@ -247,14 +252,14 @@ public class FileServiceImpl implements FileService{
 				if (width < imageHeitht) {
 					scale = width.doubleValue() / imageWidth;
 				}
-				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);
+				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat(type).toOutputStream(outputStream);
 			} else if (StringUtils.isNotBlank(strHeight)) { //按高比例缩放
 				double scale=1f;
 				Integer height = Integer.valueOf(strHeight);
 				if(height < imageHeitht){
 					scale = height.doubleValue() / imageHeitht;
 				}
-				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat("png").toOutputStream(outputStream);
+				Thumbnails.of(image).scale(scale).outputQuality(quality).rotate(rotateD).outputFormat(type).toOutputStream(outputStream);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
