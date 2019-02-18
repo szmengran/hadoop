@@ -11,7 +11,7 @@ set -e
 
 # Docker image prefix
 REGPREFIX=szmengran
-VERSION=$CLOUD_VERSION
+VERSION=0.0.3
 
 cd ../hbase
 mvn package
