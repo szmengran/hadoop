@@ -15,13 +15,13 @@ public class BusinessException extends AbstractException{
 	 */
 	private static final long serialVersionUID = 1L;
 	public BusinessException(Integer status) {
+		super(CustomerExceptionMessage.getMessage(status));
 		super.setStatus(status);
-		super.setMsg(CustomerExceptionMessage.getMessage(status));
 	}
 	
 	public BusinessException(Integer status, String errmsg) {
+		super(errmsg);
 		super.setStatus(status);
-		super.setMsg(errmsg);
 	}
 
 }

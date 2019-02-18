@@ -95,7 +95,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.szmengran</groupId>
-			<artifactId>orm-mysql</artifactId>
+			<artifactId>mybatis</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.suntak</groupId>
@@ -129,6 +129,10 @@
 		<dependency>
 			<groupId>net.coobird</groupId>
 			<artifactId>thumbnailator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
 	</dependencies>
 	<build>

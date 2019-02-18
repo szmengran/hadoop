@@ -24,8 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.szmengran.common.orm.dao.AbstractDao;
 import com.szmengran.hbase.entity.T_common_file;
+import com.szmengran.hbase.mapper.FileMapper;
 import com.szmengran.hbase.service.FileService;
 import com.szmengran.hbase.utils.HBaseConnectionPool;
 import com.szmengran.hbase.utils.HdfsFileSystem;
@@ -51,8 +51,11 @@ public class FileServiceImpl implements FileService{
 	@Autowired
 	private HBaseConnectionPool hbaseConnectionPool;
 	
+//	@Autowired
+//	AbstractDao abstractDao;
+	
 	@Autowired
-	AbstractDao abstractDao;
+	private FileMapper fileMapper;
 	
 	@Override
 	public T_common_file insert(T_common_file t_common_file) throws Exception {
@@ -61,11 +64,11 @@ public class FileServiceImpl implements FileService{
 			t_common_file.setCreatestamp(createstamp);
 			t_common_file.setUpdatestamp(createstamp);
 			t_common_file.setValidstatus("1");
-			abstractDao.insert(t_common_file);
+			fileMapper.insert(t_common_file);
 			return null;
 		}catch(Exception e) {
 			if(e.getMessage().contains("Duplicate entry")) {
-				return abstractDao.findByPrimaryKey(t_common_file);
+				return fileMapper.findById(t_common_file);
 			}else{
 				throw e;
 			}
@@ -76,7 +79,7 @@ public class FileServiceImpl implements FileService{
 	public T_common_file findById(String fileid) throws Exception {
 		T_common_file t_common_file = new T_common_file();
 		t_common_file.setFileid(fileid);
-		return abstractDao.findByPrimaryKey(t_common_file);
+		return fileMapper.findById(t_common_file);
 	}
 
 	@Override

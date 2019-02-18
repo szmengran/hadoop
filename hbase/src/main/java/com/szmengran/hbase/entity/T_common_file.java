@@ -2,12 +2,15 @@ package com.szmengran.hbase.entity;
 
 import java.sql.Timestamp;
 
+import com.szmengran.mybatis.utils.Table;
+
 /**
  * @Package com.szmengran.entity
  * @Description: 文件信息
  * @date 2018年9月25日 下午5:12:06
  * @author <a href="mailto:android_li@sina.cn">Joe</a>
  */
+@Table(id = "fileid")
 public class T_common_file{
 	private String fileid;
 	private String userid;
