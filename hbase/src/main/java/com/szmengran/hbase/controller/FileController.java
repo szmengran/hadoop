@@ -35,10 +35,12 @@ import com.szmengran.hbase.service.FileService;
 @RestController
 @RequestMapping(value = "/api/v1/hbase")
 public class FileController {
-	
-	@Autowired
-	private FileService fileService;
-	
+    
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(100);
+    
+    @Autowired
+    private FileService fileService;
+    
     @PostMapping(value = "/files/{userid}")
     @ResponseBody
     public Response upload(HttpServletRequest request, @PathVariable("userid") String userid) throws Exception {
@@ -47,17 +49,16 @@ public class FileController {
         List<T_common_file> list = new ArrayList<T_common_file>();
 
         if (files != null && files.size() > 0){
-        	ExecutorService executor = Executors.newFixedThreadPool(5);
-        	@SuppressWarnings("unchecked")
-			Future<T_common_file>[] futures = new Future[files.size()];
+            @SuppressWarnings("unchecked")
+            Future<T_common_file>[] futures = new Future[files.size()];
             for (int i = 0; i < files.size(); i++) {
-            	MultipartFile file = files.get(i);
-            	futures[i] = executor.submit(() -> {
-            		return fileService.upload(file, userid);
-            	});
+                MultipartFile file = files.get(i);
+                futures[i] = EXECUTOR.submit(() -> {
+                    return fileService.upload(file, userid);
+                });
             }
             for (Future<T_common_file> future: futures) {
-            	list.add(future.get());
+                list.add(future.get());
             }
             
         }else {
@@ -72,15 +73,15 @@ public class FileController {
 
     @GetMapping(value = "/download/{fileid}")
     public void download(@PathVariable("fileid")String fileid, HttpServletRequest request, HttpServletResponse response) throws Exception{
-    	T_common_file t_common_file = fileService.findById(fileid);
-    	String filename = t_common_file.getOrgname();
-    	if (request.getHeader("User-Agent").toUpperCase().indexOf("MSIE") > 0) {
-    		filename = URLEncoder.encode(filename, "UTF-8");
-    	} else {	
-    		filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
-    	}
-    	response.setContentType("application/force-download");
-    	response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
+        T_common_file t_common_file = fileService.findById(fileid);
+        String filename = t_common_file.getOrgname();
+        if (request.getHeader("User-Agent").toUpperCase().indexOf("MSIE") > 0) {
+            filename = URLEncoder.encode(filename, "UTF-8");
+        } else {    
+            filename = new String(filename.getBytes("UTF-8"), "ISO8859-1");
+        }
+        response.setContentType("application/force-download");
+        response.setHeader("Content-Disposition", "attachment;fileName=" + filename);
 
         OutputStream outputStream = response.getOutputStream();
         fileService.download(t_common_file.getPath(), outputStream, t_common_file.getFileid());

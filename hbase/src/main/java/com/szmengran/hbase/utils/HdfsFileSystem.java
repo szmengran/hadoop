@@ -21,18 +21,18 @@ import org.apache.hadoop.io.IOUtils;
  */
 
 public class HdfsFileSystem {
-	
-	/**
-	 * 将文件复制到输出流中，用于文件下载
-	 * @param uri
-	 * @param fpath
-	 * @param out
-	 * @param username
-	 * @throws IOException
-	 * @throws InterruptedException 
-	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
-	 */
-	public static void copyFileAsStream(String uri, String fpath, OutputStream out, String username) throws IOException, InterruptedException {
+    
+    /**
+     * 将文件复制到输出流中，用于文件下载
+     * @param uri
+     * @param fpath
+     * @param out
+     * @param username
+     * @throws IOException
+     * @throws InterruptedException 
+     * @author <a href="mailto:android_li@sina.cn">Joe</a>
+     */
+    public static void copyFileAsStream(String uri, String fpath, OutputStream out, String username) throws IOException, InterruptedException {
         Configuration conf = new Configuration();
         FileSystem hdfs = FileSystem.get(URI.create(uri), conf, username);
         org.apache.hadoop.fs.Path filePath = new org.apache.hadoop.fs.Path(fpath);
@@ -42,33 +42,33 @@ public class HdfsFileSystem {
         out.flush();
     }
 
-	/**
-	 * 文件上传到hdfs
-	 * @param uri
-	 * @param inputStream
-	 * @param filepath
-	 * @param filename
-	 * @param username 拥有操作HDFS的用户名
-	 * @throws Exception 
-	 * @author <a href="mailto:android_li@sina.cn">Joe</a>
-	 */
-	public static void createFile(String uri, InputStream inputStream, String filepath, String filename, String username) throws Exception {
-		InputStream in = null;
-		FSDataOutputStream out = null;
-		String hdfsPath = uri+filepath+"/"+filename;
-		try {
-			Configuration conf = new Configuration();
-			FileSystem fileSystem = FileSystem.get(URI.create(uri), conf, username);
-			out = fileSystem.create(new Path(hdfsPath));
-			in = new BufferedInputStream(inputStream);
-			IOUtils.copyBytes(in, out, 4096, false);
-			out.hsync();
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		} finally {
-			IOUtils.closeStream(in);
-		}
-	}
+    /**
+     * 文件上传到hdfs
+     * @param uri
+     * @param inputStream
+     * @param filepath
+     * @param filename
+     * @param username 拥有操作HDFS的用户名
+     * @throws Exception 
+     * @author <a href="mailto:android_li@sina.cn">Joe</a>
+     */
+    public static void createFile(String uri, InputStream inputStream, String filepath, String filename, String username) throws Exception {
+        InputStream in = null;
+        FSDataOutputStream out = null;
+        String hdfsPath = uri+filepath+"/"+filename;
+        try {
+            Configuration conf = new Configuration();
+            FileSystem fileSystem = FileSystem.get(URI.create(uri), conf, username);
+            out = fileSystem.create(new Path(hdfsPath));
+            in = new BufferedInputStream(inputStream);
+            IOUtils.copyBytes(in, out, 4096, false);
+            out.hsync();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            IOUtils.closeStream(in);
+        }
+    }
 }

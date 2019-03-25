@@ -19,8 +19,8 @@ import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceBuilder;
 @Configuration
 @Order(-100)
 public class DataSourceConfig {
-	
-	@Bean(initMethod = "init", name = "readDataSource")  
+    
+    @Bean(initMethod = "init", name = "readDataSource")  
     @ConfigurationProperties(prefix = "spring.datasource.druid.read")  
     public DataSource readDataSource(){  
         return DruidDataSourceBuilder.create().build();  

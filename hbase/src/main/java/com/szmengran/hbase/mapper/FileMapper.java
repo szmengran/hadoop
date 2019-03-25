@@ -13,5 +13,5 @@ import com.szmengran.mybatis.utils.mapper.IMapper;
 
 @Mapper
 public interface FileMapper extends IMapper<T_common_file> {
-
+    
 }

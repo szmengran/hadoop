@@ -10,18 +10,18 @@ import com.szmengran.exception.CustomerExceptionMessage;
  * @author <a href="mailto:android_li@sina.cn">Joe</a>
  */
 public class BusinessException extends AbstractException{
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	public BusinessException(Integer status) {
-		super(CustomerExceptionMessage.getMessage(status));
-		super.setStatus(status);
-	}
-	
-	public BusinessException(Integer status, String errmsg) {
-		super(errmsg);
-		super.setStatus(status);
-	}
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    public BusinessException(Integer status) {
+        super(CustomerExceptionMessage.getMessage(status));
+        super.setStatus(status);
+    }
+    
+    public BusinessException(Integer status, String errmsg) {
+        super(errmsg);
+        super.setStatus(status);
+    }
 
 }

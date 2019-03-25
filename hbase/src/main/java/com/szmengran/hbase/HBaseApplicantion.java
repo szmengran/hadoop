@@ -21,11 +21,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @EnableFeignClients
 @RefreshScope
 public class HBaseApplicantion {
-	public static void main(String[] args) {
-		SpringApplication.run(HBaseApplicantion.class, args);
-	}
-	
-	@Bean
+    public static void main(String[] args) {
+        SpringApplication.run(HBaseApplicantion.class, args);
+    }
+    
+    @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.serializationInclusion(JsonInclude.Include.NON_NULL);
